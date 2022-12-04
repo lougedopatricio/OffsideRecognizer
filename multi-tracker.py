@@ -22,6 +22,23 @@ def help_message():
    print(sys.argv[0] + " 1 " + "02-1.avi " + "./")
 
 
+def get_vanishing_point(line_a, line_b) -> tuple(float, float):
+    #lines = cv2.HoughLines()
+    
+    theta_a = line_a[1]
+    m_a = 0 - (math.cos(theta_a)/math.sin(theta_a))
+    n_a = line_a[0]/math.sin(theta_a)
+    
+    theta_b = line_b[1]
+    m_b = 0 - (math.cos(theta_b)/math.sin(theta_b))
+    n_b = line_b[0]/math.sin(theta_b)
+    
+    A = np.array([m_a,-1], [m_b, -1])
+    b = np.array([n_a, n_b])
+    x, y = np.linalg.solve(A,b)
+    
+    return x,y
+
 def particleevaluator(back_proj, particle):
     return back_proj[particle[1],particle[0]]
 
