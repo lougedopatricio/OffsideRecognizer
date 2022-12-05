@@ -39,6 +39,21 @@ def get_vanishing_point(line_a, line_b) -> tuple(float, float):
     
     return x,y
 
+def get_biggest_lines(lines, number=2) -> list(float, float):
+    number = 2 if number < 1 else None
+    
+    ordered = sorted(lines, key= lambda l : l[0]) #order the lines with respect to their size
+    
+    if (len(ordered) >= number):
+        return ordered
+    return ordered[0:number]
+
+def get_vertical_lines(lines) -> list(float, float): #Angles should be expresed in radians
+    return get_lines_oriented(lines, 0,61, 2,53073)
+
+def get_lines_oriented(lines, min_angle, max_angle) -> list(float, float): #Angles should be expresed in radians
+    return [l for l in lines if min_angle <= l[1] <= max_angle]
+
 def particleevaluator(back_proj, particle):
     return back_proj[particle[1],particle[0]]
 
@@ -388,6 +403,110 @@ def of_tracker(v, file_name):
             break       
 
     output.close()
+
+def detect_img():
+    print("Running")
+    
+    #Load the image
+    example = cv2.imread('example.png')
+    
+    #Detect the lines
+    lines = cv2.HoughLines(example, 1, math.pi / 180, 150, None, 0, 0)
+    
+    #Get the two biggest vertical lines
+    auxiliar_lines = get_biggest_lines(get_vertical_lines(lines))
+    
+    #Calculate the vanishing point
+    x,y = get_vanishing_point(auxiliar_lines[0], auxiliar_lines[1])
+    
+    
+    #Detect the players
+    
+    
+    #Recognice which of the players is the most forward
+    
+    
+    #Recognice which of the defenders is the most behindhand
+    
+    
+    #Take the decision to see if it is offside or not
+    
+    theta_1 = 0 #Offensive player line
+    theta_2 = 0 #Defensive player line
+    offside = False
+    
+    '''
+    if (math.pi/2 <= theta_1 <= math.pi): # Line 1 on the third cuadrant
+        if (math.pi/2 <= theta_2 <= math.pi): # Both lines on the first cuadrant
+            if (theta_1 > theta_2):
+                offside = True
+        else
+    else:
+        '''
+        
+    # Convert the angles into the fourth cuadrant angles (we´re just considering the right part of the field)
+    if (math.pi/2 <= theta_1 <= math.pi): 
+        theta_1 = theta_1*math.pi
+        
+    if (math.pi/2 <= theta_2 <= math.pi): 
+        theta_2 = theta_2*math.pi
+    
+    if (theta_1 > theta_2):
+        offside = True
+    
+    if (offside):
+        print("There is offside")    
+    else:
+        print("There is not offside")
+    
+    #Draw the lines and show them
+        #Line 1
+    rho = l1[0][0]
+    theta = l1[0][1]
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    
+        #Line 2
+    rho = l2[0][0]
+    theta = l2[0][1]
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    
+        #Line 3
+    rho = l3[0][0]
+    theta = l3[0][1]
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    
+        #Line 4
+    rho = l4[0][0]
+    theta = l4[0][1]
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    
+    
+    return None
+    
 
 if __name__ == '__main__':
     question_number = -1
