@@ -33,9 +33,9 @@ def get_vanishing_point(line_a, line_b) -> tuple(float, float):
     m_b = 0 - (math.cos(theta_b)/math.sin(theta_b))
     n_b = line_b[0]/math.sin(theta_b)
     
-    A = np.array([m_a,-1], [m_b, -1])
+    A = np.array([[1,-m_a], [1, -m_b]])
     b = np.array([n_a, n_b])
-    x, y = np.linalg.solve(A,b)
+    y,x = np.linalg.solve(A,b)
     
     return x,y
 
