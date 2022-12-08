@@ -75,6 +75,93 @@ def hsv_histogram_for_window(frame, window):
     cv2.normalize(roi_hist,roi_hist,0,255,cv2.NORM_MINMAX)
     return roi_hist
 
+def detect_players(img) -> list():
+    raise NotImplementedError("Complete this method!") 
+
+
+def split_attackers_defenders(players) -> tuple(list(), list()):
+    raise NotImplementedError("Complete this method!") 
+
+
+def get_player_most_close_to_goal(players, vanishing_point):
+    raise NotImplementedError("Complete this method!") 
+
+
+def is_offside(attacker, defender):
+    theta_1 = 0 #Offensive player line
+    theta_2 = 0 #Defensive player line
+    offside = False
+    
+    '''
+    if (math.pi/2 <= theta_1 <= math.pi): # Line 1 on the third cuadrant
+        if (math.pi/2 <= theta_2 <= math.pi): # Both lines on the first cuadrant
+            if (theta_1 > theta_2):
+                offside = True
+        else
+    else:
+        '''
+        
+    # Convert the angles into the fourth cuadrant angles (we´re just considering the right part of the field)
+    if (math.pi/2 <= theta_1 <= math.pi): 
+        theta_1 = theta_1*math.pi
+        
+    if (math.pi/2 <= theta_2 <= math.pi): 
+        theta_2 = theta_2*math.pi
+    
+    if (theta_1 > theta_2):
+        offside = True
+    
+    return offside
+
+def get_attacker_defender_lines(attacker, defender):
+    
+    return None
+
+def draw_lines_show_image(auxiliar_lines, attacker_line, defender_line, decision, image):
+    red = (5,5,255)
+    green = (20, 255, 110)
+    blue = (255, 100, 15)
+    
+    #Draw auxiliar lines
+    for line in auxiliar_lines:
+        rho = line[0][0]
+        theta = line[0][1]
+        a = math.cos(theta)
+        b = math.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+        pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+        cv2.line(image, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+        
+    #Draw defender line
+    rho = defender_line[0][0]
+    theta = defender_line[0][1]
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+    cv2.line(image, pt1, pt2, blue, 3, cv2.LINE_AA)
+    
+    #Draw attacker line
+    rho = defender_line[0][0]
+    theta = defender_line[0][1]
+    a = math.cos(theta)
+    b = math.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+    if decision:
+        cv2.line(image, pt1, pt2, red, 3, cv2.LINE_AA) # red because is offsede
+    else:
+        cv2.line(image, pt1, pt2, green, 3, cv2.LINE_AA) # green because is not offside
+     
+    cv2.imshow(image, 0)
+    
+    return None
 
 def resample(weights):
     n = len(weights)
@@ -408,10 +495,10 @@ def detect_img():
     print("Running")
     
     #Load the image
-    example = cv2.imread('example.png')
+    image = cv2.imread('example.png')
     
     #Detect the lines
-    lines = cv2.HoughLines(example, 1, math.pi / 180, 150, None, 0, 0)
+    lines = cv2.HoughLines(image, 1, math.pi / 180, 150, None, 0, 0)
     
     #Get the two biggest vertical lines
     auxiliar_lines = get_biggest_lines(get_vertical_lines(lines))
@@ -421,89 +508,24 @@ def detect_img():
     
     
     #Detect the players
+    players = detect_players()
     
+    #Split the players between attackers and defenders
+    attackers, defenders = split_attackers_defenders(players)
     
-    #Recognice which of the players is the most forward
-    
+    #Recognice which of the attackers is the most forward
+    attacker = get_player_most_close_to_goal()
     
     #Recognice which of the defenders is the most behindhand
-    
+    defender = get_player_most_close_to_goal()
     
     #Take the decision to see if it is offside or not
-    
-    theta_1 = 0 #Offensive player line
-    theta_2 = 0 #Defensive player line
-    offside = False
-    
-    '''
-    if (math.pi/2 <= theta_1 <= math.pi): # Line 1 on the third cuadrant
-        if (math.pi/2 <= theta_2 <= math.pi): # Both lines on the first cuadrant
-            if (theta_1 > theta_2):
-                offside = True
-        else
-    else:
-        '''
-        
-    # Convert the angles into the fourth cuadrant angles (we´re just considering the right part of the field)
-    if (math.pi/2 <= theta_1 <= math.pi): 
-        theta_1 = theta_1*math.pi
-        
-    if (math.pi/2 <= theta_2 <= math.pi): 
-        theta_2 = theta_2*math.pi
-    
-    if (theta_1 > theta_2):
-        offside = True
-    
-    if (offside):
-        print("There is offside")    
-    else:
-        print("There is not offside")
+    decision = is_offside(attacker,defender)
     
     #Draw the lines and show them
-        #Line 1
-    rho = l1[0][0]
-    theta = l1[0][1]
-    a = math.cos(theta)
-    b = math.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    attacker_line, defender_line = get_attacker_defender_lines(attacker, defender)
     
-        #Line 2
-    rho = l2[0][0]
-    theta = l2[0][1]
-    a = math.cos(theta)
-    b = math.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    
-        #Line 3
-    rho = l3[0][0]
-    theta = l3[0][1]
-    a = math.cos(theta)
-    b = math.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    
-        #Line 4
-    rho = l4[0][0]
-    theta = l4[0][1]
-    a = math.cos(theta)
-    b = math.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-    pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-    cv2.line(example, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    
+    draw_lines_show_image(auxiliar_lines, attacker_line, defender_line, decision, image)    
     
     return None
     
