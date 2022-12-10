@@ -84,7 +84,31 @@ def split_attackers_defenders(players) -> tuple(list(), list()):
 
 
 def get_player_most_close_to_goal(players, vanishing_point):
-    raise NotImplementedError("Complete this method!") 
+    closest = None
+    for p in players:
+        #Create a line which passes through the vanishing point and the player
+            #y = (y2-y1)*((x-x1)/(x2-x1)) + y1
+            #x = ((y-y1)/(y2-y1))*(x2-x1) + x1
+        '''
+        x1, y1 = vanishing_point[0], vanishing_point[1]
+        x2, y2 = p[0], p[1]
+        
+        y = lambda x: (y2-y1)*((x-x1)/(x2-x1)) + y1
+        x = lambda y: ((y-y1)/(y2-y1))*(x2-x1) + x1
+        
+        sen =  y(0)
+        cos =  x(0)
+        if (sen>= 0):
+            if cos>=0:
+                theta = math.atan(sen/cos)
+        
+        r = 
+        line = np.array([math.sqrt(0.2**2 + 0.4**2), theta])
+        '''
+        #if is the most close actualize the closets
+        
+        
+    return closest
 
 
 def is_offside(attacker, defender):
@@ -514,10 +538,10 @@ def detect_img():
     attackers, defenders = split_attackers_defenders(players)
     
     #Recognice which of the attackers is the most forward
-    attacker = get_player_most_close_to_goal()
+    attacker = get_player_most_close_to_goal(attackers, (x,y))
     
     #Recognice which of the defenders is the most behindhand
-    defender = get_player_most_close_to_goal()
+    defender = get_player_most_close_to_goal(defenders, (x,y))
     
     #Take the decision to see if it is offside or not
     decision = is_offside(attacker,defender)
