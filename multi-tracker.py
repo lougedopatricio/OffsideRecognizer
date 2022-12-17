@@ -84,28 +84,58 @@ def split_attackers_defenders(players) -> tuple(list(), list()):
 
 
 def get_player_most_close_to_goal(players, vanishing_point):
-    closest = None
+    closest = None  # ((x,y), line_player)
     for p in players:
         #Create a line which passes through the vanishing point and the player
             #y = (y2-y1)*((x-x1)/(x2-x1)) + y1
-            #x = ((y-y1)/(y2-y1))*(x2-x1) + x1
-        '''
+            #m = ((y2-y1)/(x2-x1))
+            #n = (-1)*x1*m + y2
+            
         x1, y1 = vanishing_point[0], vanishing_point[1]
         x2, y2 = p[0], p[1]
         
-        y = lambda x: (y2-y1)*((x-x1)/(x2-x1)) + y1
-        x = lambda y: ((y-y1)/(y2-y1))*(x2-x1) + x1
+        m = ((y2-y1)/(x2-x1))
+        n = (-1)*x1*m + y2
         
-        sen =  y(0)
-        cos =  x(0)
-        if (sen>= 0):
-            if cos>=0:
-                theta = math.atan(sen/cos)
+        a = np.array([[1,-m], [1, 1/m]])
+        b = np.array([n,0])
+        c = np.linalg.solve(a,b) #solve the ecuation system
+        x0, y0 = c[1], c[0] #point where the line and it´s perpendicular which passes through the origin met
         
-        r = 
-        line = np.array([math.sqrt(0.2**2 + 0.4**2), theta])
-        '''
-        #if is the most close actualize the closets
+        line_distance = math.sqrt(x0**2 + y0**2)
+        
+        if (y0>= 0):
+            if x0>=0:
+                theta = math.atan(y0/x0) #first cuadrant
+            else:
+                theta = math.pi - math.atan(y0/((-1)*x0)) #second cuadrant 
+        else:
+            if x0>=0:
+                theta = math.pi*2 - math.atan(((-1)*y0)/x0) #fourth cuadrant
+            else:
+                theta = math.pi + math.atan(((-1)*y0)/((-1)*x0)) #third cuadrant 
+                
+        line_player = (line_distance, theta)
+                
+        if closest != None:
+            angle_closest = closest[1]
+        else:
+            angle_closest = -1*np.inf
+        
+        #convert the angles into the third or fourth cuadrant
+        if math.pi/2 <= angle_closest <= math.pi:
+            angle_closest = angle_closest + math.pi
+        elif 0 <= angle_closest <= math.pi/2:
+            angle_closest = angle_closest + math.pi
+        
+        if math.pi/2 <= theta <= math.pi:
+            theta = theta + math.pi
+        elif 0 <= theta <= math.pi/2:
+            theta = theta + math.pi
+            
+        #if it is the most close actualize the closets
+        if theta>angle_closest or closest in None:
+            closest = (p, line_player)
         
         
     return closest
