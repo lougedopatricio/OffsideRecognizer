@@ -155,12 +155,17 @@ def is_offside(attacker, defender):
     else:
         '''
         
-    # Convert the angles into the fourth cuadrant angles (we´re just considering the right part of the field)
+    # Convert the angles into the first or fourth cuadrant angles (we´re just considering the right part of the field)
     if (math.pi/2 <= theta_1 <= math.pi): 
-        theta_1 = theta_1*math.pi
+        theta_1 = theta_1+math.pi
+    elif (0 <= theta_1 <= math.pi/2):
+        theta_1 = theta_1+math.pi
+        
         
     if (math.pi/2 <= theta_2 <= math.pi): 
         theta_2 = theta_2*math.pi
+    elif (0 <= theta_2 <= math.pi/2):
+        theta_2 = theta_2+math.pi
     
     if (theta_1 > theta_2):
         offside = True
