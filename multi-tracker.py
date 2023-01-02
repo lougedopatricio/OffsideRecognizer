@@ -22,7 +22,7 @@ def help_message():
    print(sys.argv[0] + " 1 " + "02-1.avi " + "./")
 
 
-def get_vanishing_point(line_a, line_b) -> tuple(float, float):
+def get_vanishing_point(line_a, line_b):
     #lines = cv2.HoughLines()
     
     theta_a = line_a[1]
@@ -39,7 +39,7 @@ def get_vanishing_point(line_a, line_b) -> tuple(float, float):
     
     return x,y
 
-def get_biggest_lines(lines, number=2) -> list(float, float):
+def get_biggest_lines(lines, number=2):
     number = 2 if number < 1 else None
     
     ordered = sorted(lines, key= lambda l : l[0]) #order the lines with respect to their size
@@ -48,10 +48,10 @@ def get_biggest_lines(lines, number=2) -> list(float, float):
         return ordered
     return ordered[0:number]
 
-def get_vertical_lines(lines) -> list(float, float): #Angles should be expresed in radians
-    return get_lines_oriented(lines, 0,61, 2,53073)
+def get_vertical_lines(lines): #Angles should be expresed in radians
+    return get_lines_oriented(lines, 0.61, 2.53073)
 
-def get_lines_oriented(lines, min_angle, max_angle) -> list(float, float): #Angles should be expresed in radians
+def get_lines_oriented(lines, min_angle, max_angle): #Angles should be expresed in radians
     return [l for l in lines if min_angle <= l[1] <= max_angle]
 
 def particleevaluator(back_proj, particle):
@@ -75,11 +75,11 @@ def hsv_histogram_for_window(frame, window):
     cv2.normalize(roi_hist,roi_hist,0,255,cv2.NORM_MINMAX)
     return roi_hist
 
-def detect_players(img) -> list():
+def detect_players(img):
     raise NotImplementedError("Complete this method!") 
 
 
-def split_attackers_defenders(players) -> tuple(list(), list()):
+def split_attackers_defenders(players):
     raise NotImplementedError("Complete this method!") 
 
 
