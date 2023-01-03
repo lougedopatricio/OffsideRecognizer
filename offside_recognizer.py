@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from PIL import Image
 import math
+from line import Line
 
 NMS_THRESHOLD=0.3
 MIN_CONFIDENCE=0.2
@@ -12,13 +13,15 @@ def lines_to_list(lines):
     list = []
     for i in range(0,len(lines)):
         for	j in range(0, len(lines[i])):
-            list.append(lines[i][j].tolist())
+            p1 = (lines[i][j][0], lines[i][j][1])
+            p2 = (lines[i][j][2], lines[i][j][3])
+            list.append(Line(p1, p2))
     return list
 
 def get_biggest_lines(lines, number=2):
     number = 2 if number < 1 else number
     
-    ordered = sorted(lines, key= lambda l : l[0]) #order the lines with respect to their size
+    ordered = sorted(lines, key= lambda l : l.len) #order the lines with respect to their size
     
     if (len(ordered) <= number):
         return ordered
@@ -26,20 +29,17 @@ def get_biggest_lines(lines, number=2):
 
 
 def get_vertical_lines(lines): #Angles should be expresed in radians
-	return get_lines_oriented(lines, 0.61, 2.53073)
-
+	return get_lines_oriented(lines, 1.3, 2.53073)
 
 def get_lines_oriented(lines, min_angle, max_angle): #Angles should be expresed in radians
-	return [l for l in lines if min_angle <= l[1] <= max_angle]
+	return [l for l in lines if min_angle <= l.angle <= max_angle or min_angle+math.pi/2 <= l.angle <= max_angle+math.pi/2]
 
 
 def draw_lines_simple(lines,image):
 
 	if lines is not None:
-
-		for i in range(len(lines)):
-			for j in range(len(lines[i])):
-				cv2.line(image, (lines[i][j][0],lines[i][j][1]),(lines[i][j][2],lines[i][j][3]), (0,255,0), 3, cv2.LINE_AA)
+		for l in lines:
+			cv2.line(image, l.p1, l.p2, (0,255,0), 3, cv2.LINE_AA)
 
 
 		'''
@@ -193,7 +193,7 @@ config_path = "yolov4-tiny.cfg"
 
 model = cv2.dnn.readNetFromDarknet(config_path, weights_path)
 layer_name = model.getLayerNames()
-layer_name = [layer_name[i-1] for i in model.getUnconnectedOutLayers()]
+layer_name = [layer_name[i[0] - 1] for i in model.getUnconnectedOutLayers()]
 ############################## Magic box#######################################
 results = pedestrian_detection(image, model, layer_name,
 		personidz=LABELS.index("person"))
@@ -206,15 +206,8 @@ mask = np.zeros(image.shape[:2], dtype="uint8")
 
 #Get the two biggest vertical lines
 lines_list = lines_to_list(lines)
-
-for line in lines: 
-	print(line)
-
-
-auxiliar_lines = get_vertical_lines(lines_list)
-
-print(auxiliar_lines)
-draw_lines_simple(lines,image)
+auxiliar_lines = get_biggest_lines(get_vertical_lines(lines_list), number = 150)
+draw_lines_simple(auxiliar_lines,image)
 
 #cv2.imshow('imagen', image)
 #cv2.waitKey(0)
