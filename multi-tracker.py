@@ -4,6 +4,10 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+from line import Line
+
+NMS_THRESHOLD=0.3
+MIN_CONFIDENCE=0.2
 
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
@@ -22,16 +26,23 @@ def help_message():
    print(sys.argv[0] + " 1 " + "02-1.avi " + "./")
 
 
+def lines_to_list(lines):
+    list = []
+    for i in range(0,len(lines)):
+        for	j in range(0, len(lines[i])):
+            p1 = (lines[i][j][0], lines[i][j][1])
+            p2 = (lines[i][j][2], lines[i][j][3])
+            list.append(Line(p1, p2))
+    return list
+
 def get_vanishing_point(line_a, line_b):
-    #lines = cv2.HoughLines()
+    #lines = cv2.HoughLinesP()
     
-    theta_a = line_a[1]
-    m_a = 0 - (math.cos(theta_a)/math.sin(theta_a))
-    n_a = line_a[0]/math.sin(theta_a)
+    m_a = ((line_a.p2[1]-line_a.p1[1])*(0-line_a.p1[0])/(line_a.p2[0]-line_a.p1[0]))
+    n_a = (line_a.p1[1])
     
-    theta_b = line_b[1]
-    m_b = 0 - (math.cos(theta_b)/math.sin(theta_b))
-    n_b = line_b[0]/math.sin(theta_b)
+    m_b = ((line_b.p2[1]-line_b.p1[1])*(0-line_b.p1[0])/(line_b.p2[0]-line_b.p1[0]))
+    n_b = (line_b.p1[1])
     
     A = np.array([[1,-m_a], [1, -m_b]])
     b = np.array([n_a, n_b])
@@ -40,19 +51,19 @@ def get_vanishing_point(line_a, line_b):
     return x,y
 
 def get_biggest_lines(lines, number=2):
-    number = 2 if number < 1 else None
+    number = 2 if number < 1 else number
     
-    ordered = sorted(lines, key= lambda l : l[0]) #order the lines with respect to their size
+    ordered = sorted(lines, key= lambda l : l.len) #order the lines with respect to their size
     
-    if (len(ordered) >= number):
+    if (len(ordered) <= number):
         return ordered
     return ordered[0:number]
 
 def get_vertical_lines(lines): #Angles should be expresed in radians
-    return get_lines_oriented(lines, 0.61, 2.53073)
+	return get_lines_oriented(lines, 1.3, 2.53073)
 
 def get_lines_oriented(lines, min_angle, max_angle): #Angles should be expresed in radians
-    return [l for l in lines if min_angle <= l[1] <= max_angle]
+	return [l for l in lines if min_angle <= l.angle <= max_angle or min_angle+math.pi/2 <= l.angle <= max_angle+math.pi/2]
 
 def particleevaluator(back_proj, particle):
     return back_proj[particle[1],particle[0]]
@@ -549,6 +560,56 @@ def of_tracker(v, file_name):
             break       
 
     output.close()
+    
+def pedestrian_detection(image, model, layer_name, personidz=0):
+	(H, W) = image.shape[:2]
+	results = []
+
+
+	blob = cv2.dnn.blobFromImage(image, 1 / 255.0, (416, 416),
+	swapRB=True, crop=False)
+	model.setInput(blob)
+	layerOutputs = model.forward(layer_name)
+
+	boxes = []
+	centroids = []
+	confidences = []
+
+	for output in layerOutputs:
+		for detection in output:
+
+			scores = detection[5:]
+			classID = np.argmax(scores)
+			confidence = scores[classID]
+
+			if classID == personidz and confidence > MIN_CONFIDENCE:
+
+				box = detection[0:4] * np.array([W, H, W, H])
+				(centerX, centerY, width, height) = box.astype("int")
+
+				x = int(centerX - (width / 2))
+				y = int(centerY - (height / 2))
+
+				boxes.append([x, y, int(width), int(height)])
+				centroids.append((centerX, centerY))
+				confidences.append(float(confidence))
+	# apply non-maxima suppression to suppress weak, overlapping
+	# bounding boxes
+	idzs = cv2.dnn.NMSBoxes(boxes, confidences, MIN_CONFIDENCE, NMS_THRESHOLD)
+	# ensure at least one detection exists
+	if len(idzs) > 0:
+		# loop over the indexes we are keeping
+		for i in idzs.flatten():
+			# extract the bounding box coordinates
+			(x, y) = (boxes[i][0], boxes[i][1])
+			(w, h) = (boxes[i][2], boxes[i][3])
+			# update our results list to consist of the person
+			# prediction probability, bounding box coordinates,
+			# and the centroid
+			res = (confidences[i], (x, y, x + w, y + h), centroids[i])
+			results.append(res)
+	# return the list of results
+	return results
 
 def detect_img():
     print("Running")
@@ -557,7 +618,7 @@ def detect_img():
     image = cv2.imread('example.png')
     
     #Detect the lines
-    lines = cv2.HoughLines(image, 1, math.pi / 180, 150, None, 0, 0)
+    lines = cv2.HoughLinesP(image, 1, math.pi / 180, 150, None, 0, 0)
     
     #Get the two biggest vertical lines
     auxiliar_lines = get_biggest_lines(get_vertical_lines(lines))
@@ -567,6 +628,17 @@ def detect_img():
     
     
     #Detect the players
+    labelsPath = "coco.names"
+    LABELS = open(labelsPath).read().strip().split("\n")
+
+    weights_path = "yolov4-tiny.weights"
+    config_path = "yolov4-tiny.cfg"
+
+    model = cv2.dnn.readNetFromDarknet(config_path, weights_path)
+    layer_name = model.getLayerNames()
+    layer_name = [layer_name[i[0] - 1] for i in model.getUnconnectedOutLayers()]
+    ############################## Magic box#######################################
+    results = pedestrian_detection(image, model, layer_name, personidz=LABELS.index("person"))
     players = detect_players()
     
     #Split the players between attackers and defenders
